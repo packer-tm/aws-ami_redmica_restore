@@ -1,0 +1,57 @@
+{
+  "variables": {
+    "ami_name": "",
+    "aws_access_key": "",
+    "aws_secret_key": "",
+    "aws_region": "",
+    "local_file_name": "",
+    "s3_bucket": "",
+    "s3_object_name": "",
+    "source_ami_id": "",
+    "tag_name": "",
+    "working_dir": ""
+  },
+  "builders": [{
+    "type": "amazon-ebs",
+    "access_key": "{{user `aws_access_key`}}",
+    "secret_key": "{{user `aws_secret_key`}}",
+    "region": "{{user `aws_region`}}",
+    "source_ami": "{{user `source_ami_id`}}",
+    "instance_type": "t2.micro",
+    "ssh_username": "centos",
+    "ami_name": "{{user `ami_name`}}",
+    "launch_block_device_mappings": [
+      {
+        "device_name": "/dev/sda1",
+        "volume_size": 20,
+        "volume_type": "gp2",
+        "delete_on_termination": true
+      }
+    ],
+    "tags": {
+       "Name": "{{user `tag_name`}}"
+    }
+  }],
+  "provisioners": [
+    {
+      "type": "ansible",
+      "playbook_file": "./aws-s3/get.yml",
+      "extra_arguments": [
+        "--extra-vars", "aws_access_key_id={{user `aws_access_key`}}",
+        "--extra-vars", "aws_secret_access_key={{user `aws_secret_key`}}",
+        "--extra-vars", "aws_region={{user `aws_region`}}",
+        "--extra-vars", "local_file_name={{user `local_file_name`}}",
+        "--extra-vars", "pip_executable=pip",
+        "--extra-vars", "pip_package=python-pip",
+        "--extra-vars", "s3_bucket={{user `s3_bucket`}}",
+        "--extra-vars", "s3_object_name={{user `s3_object_name`}}",
+        "--extra-vars", "working_dir={{user `working_dir`}}"
+      ],
+      "galaxy_file": "./aws-s3/roles/requirements.yml"
+    },
+    {
+      "type": "ansible",
+      "playbook_file": "./redmine_restore/restore.yml"
+    }
+  ]
+}
